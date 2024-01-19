@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for
 from flask_socketio import SocketIO, join_room
 from flask_login import LoginManager, current_user, login_user, login_required, logout_user
-from db import get_user, save_user
+from db import get_user, save_user, save_room, add_room_member, add_room_members, get_room, get_rooms_for_user, get_room_member,is_room_memeber
 from pymongo.errors import DuplicateKeyError
 
 app = Flask(__name__)
@@ -13,7 +13,10 @@ login_manager.init_app(app)
 
 @app.route('/')
 def home():
-    return render_template("index.html")
+    rooms = []
+    if current_user.is_authenticated:
+        rooms = get_rooms_for_user(current_user.username)
+    return render_template("index.html", rooms = rooms)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -59,15 +62,34 @@ def logout():
     return redirect(url_for('home'))
 
 
-@app.route('/chat')
+@app.route('/create-room', methods=['GET','POST'])
 @login_required
-def chat():
-    username = request.args.get('username')
-    room = request.args.get('room')
-    if username and room:
-        return render_template('chat.html', username=username, room=room)
+def create_room():
+    message = ''
+    if request.method == 'POST':
+        room_name = request.form.get('room_name')
+        usernames = [username.strip() for username in  request.form.get('members').split(',')]
+        if len(room_name) and len(usernames):
+            room_id = save_room(room_name, current_user.username)
+            if current_user.username in usernames:
+                usernames.remove(current_user.username)
+            add_room_members(room_id, room_name, usernames, current_user.username)
+            return redirect(url_for('view_room',room_id = room_id))
+        else:
+            message = 'Failed to create room'
+    return render_template('create_room.html',message = message)
+
+
+
+@app.route('/rooms/<room_id>/')
+@login_required
+def view_room(room_id):
+    room = get_room(room_id)
+    if room and is_room_memeber(room_id, current_user.username):
+        room_members = get_room_member(room_id)
+        return render_template('view_room.html', username=current_user.username, room=room, room_members=room_members)
     else:
-        return redirect(url_for('home'))
+        return "Room not found", 404
 
 
 @socketio.on('send_message')

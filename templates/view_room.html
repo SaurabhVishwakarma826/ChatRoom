@@ -1,28 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <title>MyChatApp</title>
+    <title>My Chat App</title>
 </head>
-
 <body>
-    <h1>Welcome to chat room {{ room }}</h1>
-    <div id="message"></div>
-    <form id="message_input_form">
-        <input type="text" id="message_input" placeholder="Enter your message here">
-        <button type="submit">Send</button>
-    </form>
+<h1>Welcome to chat room: {{ room.name }}</h1>
+
+<div id="messages"></div>
+
+<form id="message_input_form">
+    <input type="text" id="message_input" placeholder="Enter your message here">
+    <button type="submit">Send</button>
+</form>
+
+<h3>Members</h3>
+<ul>
+    {% for member in room_members %}
+        <li>{{ member._id.username }}</li>
+    {% endfor %}
+</ul>
+
 </body>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.3/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
 <script>
-    const baseUrl = window.location.origin;
-    const socket = io(`${baseUrl}/`);
-    
+    const socket = io.connect("http://127.0.0.1:5000");
+
     socket.on('connect', function () {
         socket.emit('join_room', {
             username: "{{ username }}",
-            room: "{{ room }}"
+            room: "{{ room._id }}"
         });
 
         let message_input = document.getElementById('message_input');
@@ -33,7 +40,7 @@
             if (message.length) {
                 socket.emit('send_message', {
                     username: "{{ username }}",
-                    room: "{{ room }}",
+                    room: "{{ room._id }}",
                     message: message
                 })
             }
@@ -45,7 +52,7 @@
     window.onbeforeunload = function () {
         socket.emit('leave_room', {
             username: "{{ username }}",
-            room: "{{ room }}"
+            room: "{{ room._id }}"
         })
     };
 
@@ -53,7 +60,7 @@
         console.log(data);
         const newNode = document.createElement('div');
         newNode.innerHTML = `<b>${data.username}:&nbsp;</b> ${data.message}`;
-        document.getElementById('message').appendChild(newNode);
+        document.getElementById('messages').appendChild(newNode);
     });
 
     socket.on('join_room_announcement', function (data) {
@@ -61,7 +68,7 @@
         if (data.username !== "{{ username }}") {
             const newNode = document.createElement('div');
             newNode.innerHTML = `<b>${data.username}</b> has joined the room`;
-            document.getElementById('message').appendChild(newNode);
+            document.getElementById('messages').appendChild(newNode);
         }
     });
 
@@ -69,8 +76,7 @@
         console.log(data);
         const newNode = document.createElement('div');
         newNode.innerHTML = `<b>${data.username}</b> has left the room`;
-        document.getElementById('message').appendChild(newNode);
+        document.getElementById('messages').appendChild(newNode);
     });
 </script>
-
 </html>

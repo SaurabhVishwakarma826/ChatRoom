@@ -1,22 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>MyChatApp</title>
 </head>
+
 <body>
     <h1>My Chat App</h1>
     <h3>Hi {% if current_user.is_authenticated %}{{ current_user.username }}{% else %}Guest{% endif %}!</h3>
-<form action="/chat">
-    <div>
-        <label>Enter your username:</label>
-        <input title="text" name="username">
-    </div>
-    <div>
-        <label>Enter your room ID:</label>
-        <input title="text" name="room">
-    </div>
-    <button type="submit">Submit</button>
-</form>
+
+    {% if current_user.is_authenticated %}
+    <h3>My rooms</h3>
+    <ul>
+        {% for room in rooms %}
+        <li><a href="/rooms/{{ room._id.room_id }}">{{ room._id.room_name }}</a></li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
 </body>
 </html>
