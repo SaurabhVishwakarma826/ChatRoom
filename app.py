@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for
 from flask_socketio import SocketIO, join_room
 from flask_login import LoginManager, current_user, login_user, login_required, logout_user
-from db import get_user, save_user, save_room, add_room_member, add_room_members, get_room, get_rooms_for_user, get_room_member,is_room_memeber
+from db import get_user, save_user, save_room, add_room_member, add_room_members, get_room, get_rooms_for_user, get_room_members,is_room_member
 from pymongo.errors import DuplicateKeyError
 
 app = Flask(__name__)
@@ -85,12 +85,11 @@ def create_room():
 @login_required
 def view_room(room_id):
     room = get_room(room_id)
-    if room and is_room_memeber(room_id, current_user.username):
-        room_members = get_room_member(room_id)
+    if room and is_room_member(room_id, current_user.username):
+        room_members = get_room_members(room_id)
         return render_template('view_room.html', username=current_user.username, room=room, room_members=room_members)
     else:
         return "Room not found", 404
-
 
 @socketio.on('send_message')
 def handle_send_message_event(data):
