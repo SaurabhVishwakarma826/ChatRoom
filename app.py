@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for
 from flask_socketio import SocketIO, join_room
 from flask_login import LoginManager, current_user, login_user, login_required, logout_user
-from db import get_user, save_user, save_room, add_room_member, add_room_members, get_room, get_rooms_for_user, get_room_members,is_room_member
+from db import get_user, save_user, save_room, add_room_member, add_room_members, get_room, get_rooms_for_user, get_room_members,is_room_member, is_room_admin, update_roon,remove_room_members
 from pymongo.errors import DuplicateKeyError
 
 app = Flask(__name__)
@@ -80,6 +80,32 @@ def create_room():
     return render_template('create_room.html',message = message)
 
 
+@app.route('/rooms/<room_id>/edit', methods=['GET','POST'])
+@login_required
+def edit_room(room_id):
+    room = get_room(room_id)
+    print(current_user.username)
+    print(is_room_admin(room_id, current_user.username))
+    if room and is_room_admin(room_id, current_user.username):
+        existing_room_member = [member['_id']['username'] for member in get_room_members(room_id)]
+        room_members_str = ",".join(existing_room_member)
+        message = ''
+        if request.method == 'POST':
+            room_name = request.form.get('room_name')
+            room['name'] = room_name
+            update_roon(room_id, room_name)
+            new_members = [username.strip() for username in  request.form.get('members').split(',')]
+            members_to_add = list(set(new_members)-set(existing_room_member))
+            members_to_remove = list(set(existing_room_member)-set(new_members))
+            if len(members_to_add):
+                add_room_members(room_id, room_name, members_to_add, current_user.username)
+            if len(members_to_remove):
+                remove_room_members(room_id, members_to_remove)
+            message = 'Room edited successfully...'
+            room_members_str = ",".join(new_members)
+        return render_template('edit_room.html', room = room, room_members_str = room_members_str, message = message)
+    else:
+        return "Room not found",404
 
 @app.route('/rooms/<room_id>/')
 @login_required
