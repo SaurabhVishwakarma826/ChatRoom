@@ -25,8 +25,8 @@ This is a simple chat application built using Flask, MongoDB, and Socket.IO. Use
 1. **Clone the repository:**
 
     ```bash
-    git clone https://github.com/your-username/your-chat-app.git
-    cd your-chat-app
+    git clone https://github.com/SaurabhVishwakarma826/ChatRoom.git
+    cd ChatRoom
     ```
 
 2. **Install dependencies:**
