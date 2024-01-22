@@ -41,7 +41,7 @@ This is a simple chat application built using Flask, MongoDB, and Socket.IO. Use
 4. **Run the application:**
 
     ```bash
-    python your_app_name.py
+    python app.py
     ```
 
 5. **Access the application:**
